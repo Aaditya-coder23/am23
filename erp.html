@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Student Registration</title>
+</head>
+<body>
+
+<h2>Register Student</h2>
+
+<input id="name" placeholder="Student Name"><br><br>
+<input id="class" placeholder="Class"><br><br>
+<input id="password" placeholder="Password" type="password"><br><br>
+<button onclick="addStudent()">Register</button>
+
+<script>
+// Register a new student
+function addStudent(){
+    let name = document.getElementById("name").value;
+    let sclass = document.getElementById("class").value;
+    let password = document.getElementById("password").value;
+
+    if(name==="" || sclass==="" || password===""){
+        alert("Fill all fields!");
+        return;
+    }
+
+    let students = JSON.parse(localStorage.getItem("students") || "[]");
+
+    students.push({
+        student_name: name,
+        student_class: sclass,
+        student_password: password
+    });
+
+    localStorage.setItem("students", JSON.stringify(students));
+    alert("Student registered!");
+    
+    document.getElementById("name").value = "";
+    document.getElementById("class").value = "";
+    document.getElementById("password").value = "";
+}
+</script>
+
+</body>
+</html>

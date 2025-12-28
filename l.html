@@ -1,0 +1,1288 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <title>Mini ERP Pro - HTML Only (Offline)</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <style>
+    :root {
+      --bg: #0f172a;
+      --bg-alt: #111827;
+      --panel: #1f2937;
+      --border: #374151;
+      --text: #e5e7eb;
+      --text-dim: #9ca3af;
+      --accent: #3b82f6;
+      --accent-2: #10b981;
+      --warn: #f59e0b;
+      --danger: #ef4444;
+      --chart-grid: rgba(255,255,255,0.08);
+    }
+    body.light {
+      --bg: #f3f4f6;
+      --bg-alt: #ffffff;
+      --panel: #ffffff;
+      --border: #e5e7eb;
+      --text: #1f2937;
+      --text-dim: #6b7280;
+      --chart-grid: rgba(0,0,0,0.08);
+      background: #f3f4f6 !important;
+    }
+
+    * { box-sizing: border-box; }
+    html, body { height: 100%; }
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, "Helvetica Neue", Arial, "Noto Sans";
+      background: linear-gradient(180deg, #0b1220, var(--bg));
+      color: var(--text);
+    }
+
+    /* Layout */
+    .app {
+      display: grid;
+      grid-template-columns: 260px 1fr;
+      grid-template-rows: 56px auto;
+      grid-template-areas:
+        "sidebar topbar"
+        "sidebar main";
+      height: 100vh;
+    }
+    .sidebar {
+      grid-area: sidebar;
+      background: var(--bg-alt);
+      border-right: 1px solid var(--border);
+      display: flex; flex-direction: column;
+    }
+    .topbar {
+      grid-area: topbar;
+      background: var(--bg-alt);
+      border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0 16px;
+      position: sticky; top: 0; z-index: 5;
+    }
+    .main {
+      grid-area: main;
+      padding: 16px;
+      overflow: auto;
+    }
+
+    /* Sidebar */
+    .brand {
+      padding: 16px; font-weight: 700; letter-spacing: 0.5px;
+      display: flex; align-items: center; gap: 10px;
+      border-bottom: 1px solid var(--border);
+    }
+    .brand .logo {
+      width: 28px; height: 28px; border-radius: 6px;
+      background: linear-gradient(135deg, var(--accent), #8b5cf6);
+      box-shadow: 0 0 0 2px #0002 inset;
+    }
+    .menu { padding: 8px; display: grid; gap: 4px; }
+    .menu button {
+      all: unset; display: flex; align-items: center; gap: 10px;
+      padding: 10px 12px; border-radius: 8px; color: var(--text); cursor: pointer;
+    }
+    .menu button:hover { background: #1a2435; }
+    body.light .menu button:hover { background: #f3f4f6; }
+    .menu button.active { background: #13203a; outline: 1px solid #193058; }
+    body.light .menu button.active { background: #e5f0ff; outline: 1px solid #cfe3ff; }
+    .menu .pill {
+      margin-left: auto; background: #12203a; color: var(--text-dim);
+      padding: 2px 8px; border-radius: 999px; font-size: 12px; border: 1px solid #223454;
+    }
+    body.light .menu .pill { background: #eef2ff; border-color: #dbeafe; }
+
+    /* Topbar */
+    .search {
+      display: flex; align-items: center; gap: 10px;
+      background: var(--panel); border: 1px solid var(--border); border-radius: 10px;
+      padding: 8px 12px; width: 50%; max-width: 560px;
+    }
+    .search input { all: unset; flex: 1; color: var(--text); }
+    .user { display: flex; align-items: center; gap: 8px; }
+    .avatar {
+      width: 28px; height: 28px; border-radius: 50%;
+      background: linear-gradient(135deg, #334155, #64748b); border: 1px solid var(--border);
+    }
+    .badge { font-size: 12px; color: var(--text-dim); }
+
+    /* Panels */
+    .panel {
+      background: var(--panel); border: 1px solid var(--border); border-radius: 12px; padding: 16px;
+      box-shadow: 0 8px 20px #0004;
+    }
+    body.light .panel { box-shadow: 0 10px 18px #00000010; }
+    .panel h2 { margin: 0 0 12px; font-size: 18px; font-weight: 600; }
+
+    /* Grid */
+    .grid { display: grid; gap: 16px; }
+    .grid.cols-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .grid.cols-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    .grid.cols-4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+    @media (max-width: 1100px) { .grid.cols-4 { grid-template-columns: repeat(2, 1fr); } }
+    @media (max-width: 800px) {
+      .app { grid-template-columns: 1fr; grid-template-areas: "topbar" "main"; }
+      .sidebar { display: none; }
+      .search { width: 100%; }
+      .grid.cols-3, .grid.cols-2 { grid-template-columns: 1fr; }
+    }
+
+    /* KPI tiles */
+    .kpi { display: flex; gap: 12px; align-items: center; }
+    .kpi .icon { width: 38px; height: 38px; border-radius: 10px; display: grid; place-items: center; color: white; }
+    .kpi .value { font-size: 20px; font-weight: 700; }
+    .kpi .label { font-size: 12px; color: var(--text-dim); }
+
+    /* Table */
+    .table-wrap { overflow: auto; }
+    table {
+      width: 100%; border-collapse: collapse; overflow: hidden; border-radius: 10px;
+      border: 1px solid var(--border); background: #0f1627;
+    }
+    body.light table { background: #ffffff; }
+    thead th {
+      text-align: left; background: #13203a; padding: 10px; font-size: 12px; color: var(--text-dim);
+      border-bottom: 1px solid var(--border); position: sticky; top: 0;
+    }
+    body.light thead th { background: #f6faff; }
+    tbody td { padding: 10px; border-bottom: 1px solid #17233a; }
+    body.light tbody td { border-bottom-color: #eef2f7; }
+    tbody tr:hover { background: #121c31; }
+    body.light tbody tr:hover { background: #f9fafb; }
+
+    /* Form */
+    .form-grid { display: grid; gap: 12px; grid-template-columns: repeat(2, 1fr); }
+    .form-grid .full { grid-column: 1 / -1; }
+    label { font-size: 12px; color: var(--text-dim); display: block; margin-bottom: 6px; }
+    input, select, textarea {
+      width: 100%; padding: 10px; border-radius: 8px; border: 1px solid var(--border);
+      background: #0e1526; color: var(--text);
+    }
+    body.light input, body.light select, body.light textarea { background: #ffffff; color: var(--text); }
+    .actions { display: flex; gap: 8px; flex-wrap: wrap; }
+    .btn {
+      all: unset; cursor: pointer; background: #13203a; border: 1px solid #203455; padding: 8px 12px; border-radius: 8px;
+    }
+    body.light .btn { background: #eef2ff; border-color: #dbeafe; }
+    .btn.primary { background: var(--accent); border: none; color: #fff; }
+    .btn.success { background: var(--accent-2); border: none; color: #fff; }
+    .btn.warn { background: var(--warn); border: none; color: #fff; }
+    .btn.danger { background: var(--danger); border: none; color: #fff; }
+    .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+    .inline-actions { display: flex; gap: 8px; }
+    .tag {
+      display: inline-block; padding: 2px 8px; border-radius: 999px; font-size: 12px; border: 1px solid var(--border);
+      color: var(--text-dim); background: #0e1526;
+    }
+    body.light .tag { background: #ffffff; }
+
+    .footer { margin-top: 24px; color: var(--text-dim); font-size: 12px; text-align: center; }
+    .note { font-size: 12px; color: var(--text-dim); }
+
+    /* Canvas sizing helper */
+    .chart-canvas { width: 100%; height: 180px; display: block; }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <!-- SIDEBAR -->
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="logo"></div>
+        <div>Mini ERP Pro</div>
+      </div>
+      <nav class="menu">
+        <button data-view="dashboard" class="active">🏠 Dashboard</button>
+        <button data-view="sales">🧾 Sales</button>
+        <button data-view="inventory">📦 Inventory</button>
+        <button data-view="purchasing">🛒 Purchasing</button>
+        <button data-view="hr">👤 HR</button>
+        <button data-view="finance">💳 Finance</button>
+        <button data-view="settings">⚙️ Settings <span class="pill">Admin</span></button>
+      </nav>
+    </aside>
+
+    <!-- TOPBAR -->
+    <header class="topbar">
+      <div class="search">🔎
+        <input id="globalSearch" placeholder="Search across modules (press Enter)..."/>
+      </div>
+      <div class="user">
+        <span class="badge" id="orgName">Acme Corp</span>
+        <div class="avatar" title="You"></div>
+      </div>
+    </header>
+
+    <!-- MAIN -->
+    <main class="main">
+      <!-- DASHBOARD -->
+      <section id="view-dashboard" class="panel">
+        <h2>Dashboard</h2>
+        <div class="grid cols-4">
+          <div class="panel kpi">
+            <div class="icon" style="background: linear-gradient(135deg,#3b82f6,#2563eb)">💰</div>
+            <div>
+              <div class="value" id="kpiRevenue">$0</div>
+              <div class="label">MTD Revenue</div>
+            </div>
+          </div>
+          <div class="panel kpi">
+            <div class="icon" style="background: linear-gradient(135deg,#10b981,#059669)">📦</div>
+            <div>
+              <div class="value" id="kpiStock">0</div>
+              <div class="label">Items In Stock</div>
+            </div>
+          </div>
+          <div class="panel kpi">
+            <div class="icon" style="background: linear-gradient(135deg,#f59e0b,#d97706)">🧾</div>
+            <div>
+              <div class="value" id="kpiOpenOrders">0</div>
+              <div class="label">Open Sales Orders</div>
+            </div>
+          </div>
+          <div class="panel kpi">
+            <div class="icon" style="background: linear-gradient(135deg,#ef4444,#dc2626)">🧑‍💼</div>
+            <div>
+              <div class="value" id="kpiEmployees">0</div>
+              <div class="label">Employees</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Dynamic Charts (Vanilla Canvas) -->
+        <div class="grid cols-3" style="margin-top:16px;">
+          <div class="panel">
+            <h2>Revenue Trend</h2>
+            <canvas id="chartRevenue" class="chart-canvas"></canvas>
+            <div class="note">Based on invoices marked “Paid”.</div>
+          </div>
+          <div class="panel">
+            <h2>Inventory Levels</h2>
+            <canvas id="chartInventory" class="chart-canvas"></canvas>
+            <div class="note">Top items by stock.</div>
+          </div>
+          <div class="panel">
+            <h2>Order Status</h2>
+            <canvas id="chartOrders" class="chart-canvas"></canvas>
+            <div class="note">Distribution of Sales Orders by status.</div>
+          </div>
+        </div>
+
+        <div class="grid cols-2" style="margin-top: 16px;">
+          <div class="panel">
+            <h2>Quick Tasks</h2>
+            <ul id="tasks" style="margin:0;padding-left:18px;">
+              <li>Approve purchase orders</li>
+              <li>Review overdue invoices</li>
+              <li>Update inventory safety stock</li>
+              <li>Onboard new employee</li>
+            </ul>
+          </div>
+          <div class="panel">
+            <h2>Notes</h2>
+            <textarea id="sticky" rows="7" placeholder="Write quick notes..."></textarea>
+            <div class="actions" style="margin-top:10px;">
+              <button class="btn success" id="saveSticky">💾 Save</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- SALES -->
+      <section id="view-sales" class="panel" hidden>
+        <h2>Sales Orders</h2>
+        <div class="actions" style="margin-bottom:10px;">
+          <button class="btn primary" id="addSalesOrderBtn">➕ New Order</button>
+          <input id="salesSearch" placeholder="Search orders..."/>
+          <button class="btn" id="exportSalesCsv">⬇️ Export CSV</button>
+          <label class="btn">⬆️ Import CSV<input id="importSalesCsv" type="file" accept=".csv" style="display:none"/></label>
+        </div>
+        <div class="table-wrap">
+          <table id="salesTable">
+            <thead>
+              <tr>
+                <th>Order #</th><th>Customer</th><th>Date</th><th>Status</th><th>Total</th><th>Actions</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+
+        <div id="salesFormPanel" class="panel" style="margin-top:16px;" hidden>
+          <h2 id="salesFormTitle">New Order</h2>
+          <div class="form-grid">
+            <div><label>Order #</label><input id="soNumber"/></div>
+            <div><label>Customer</label><input id="soCustomer"/></div>
+            <div><label>Date</label><input id="soDate" type="date"/></div>
+            <div>
+              <label>Status</label>
+              <select id="soStatus">
+                <option>Open</option><option>Processing</option><option>Shipped</option><option>Closed</option>
+              </select>
+            </div>
+            <div class="full">
+              <label>Line Items (JSON: [{"sku":"A1","qty":2,"price":99.5}])</label>
+              <textarea id="soLines" rows="4" placeholder='[{"sku":"A1","qty":2,"price":99.5}]'></textarea>
+            </div>
+            <div class="full actions">
+              <button class="btn success" id="saveSalesOrder">💾 Save</button>
+              <button class="btn" id="cancelSalesOrder">✖ Cancel</button>
+              <button class="btn warn" id="duplicateSalesOrder">📄 Duplicate</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- INVENTORY -->
+      <section id="view-inventory" class="panel" hidden>
+        <h2>Inventory</h2>
+        <div class="actions" style="margin-bottom:10px;">
+          <button class="btn primary" id="addItemBtn">➕ Add Item</button>
+          <input id="inventorySearch" placeholder="Search items..."/>
+          <button class="btn" id="exportInventoryCsv">⬇️ Export CSV</button>
+          <label class="btn">⬆️ Import CSV<input id="importInventoryCsv" type="file" accept=".csv" style="display:none"/></label>
+        </div>
+        <div class="table-wrap">
+          <table id="inventoryTable">
+            <thead>
+              <tr>
+                <th>SKU</th><th>Name</th><th>Category</th><th>Stock</th><th>Reorder Level</th><th>Actions</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+
+        <div id="inventoryFormPanel" class="panel" style="margin-top:16px;" hidden>
+          <h2 id="inventoryFormTitle">New Item</h2>
+          <div class="form-grid">
+            <div><label>SKU</label><input id="invSku"/></div>
+            <div><label>Name</label><input id="invName"/></div>
+            <div><label>Category</label><input id="invCategory"/></div>
+            <div><label>Stock</label><input id="invStock" type="number"/></div>
+            <div><label>Reorder Level</label><input id="invReorder" type="number"/></div>
+            <div class="full actions">
+              <button class="btn success" id="saveItem">💾 Save</button>
+              <button class="btn" id="cancelItem">✖ Cancel</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- PURCHASING -->
+      <section id="view-purchasing" class="panel" hidden>
+        <h2>Purchase Orders</h2>
+        <div class="actions" style="margin-bottom:10px;">
+          <button class="btn primary" id="addPOBtn">➕ New PO</button>
+          <input id="poSearch" placeholder="Search POs..."/>
+          <button class="btn" id="exportPOCsv">⬇️ Export CSV</button>
+          <label class="btn">⬆️ Import CSV<input id="importPOCsv" type="file" accept=".csv" style="display:none"/></label>
+        </div>
+        <div class="table-wrap">
+          <table id="poTable">
+            <thead>
+              <tr>
+                <th>PO #</th><th>Vendor</th><th>Date</th><th>Status</th><th>Total</th><th>Actions</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+
+        <div id="poFormPanel" class="panel" style="margin-top:16px;" hidden>
+          <h2 id="poFormTitle">New PO</h2>
+          <div class="form-grid">
+            <div><label>PO #</label><input id="poNumber"/></div>
+            <div><label>Vendor</label><input id="poVendor"/></div>
+            <div><label>Date</label><input id="poDate" type="date"/></div>
+            <div>
+              <label>Status</label>
+              <select id="poStatus">
+                <option>Open</option><option>Approved</option><option>Received</option><option>Closed</option>
+              </select>
+            </div>
+            <div class="full">
+              <label>Line Items (JSON: [{"sku":"A1","qty":5,"price":80}])</label>
+              <textarea id="poLines" rows="4" placeholder='[{"sku":"A1","qty":5,"price":80}]'></textarea>
+            </div>
+            <div class="full actions">
+              <button class="btn success" id="savePO">💾 Save</button>
+              <button class="btn" id="cancelPO">✖ Cancel</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- HR -->
+      <section id="view-hr" class="panel" hidden>
+        <h2>Employees</h2>
+        <div class="actions" style="margin-bottom:10px;">
+          <button class="btn primary" id="addEmpBtn">➕ Add Employee</button>
+          <input id="empSearch" placeholder="Search employees..."/>
+          <button class="btn" id="exportEmpCsv">⬇️ Export CSV</button>
+          <label class="btn">⬆️ Import CSV<input id="importEmpCsv" type="file" accept=".csv" style="display:none"/></label>
+        </div>
+        <div class="table-wrap">
+          <table id="empTable">
+            <thead>
+              <tr>
+                <th>Emp ID</th><th>Name</th><th>Role</th><th>Department</th><th>Status</th><th>Actions</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+
+        <div id="empFormPanel" class="panel" style="margin-top:16px;" hidden>
+          <h2 id="empFormTitle">New Employee</h2>
+          <div class="form-grid">
+            <div><label>Emp ID</label><input id="empId"/></div>
+            <div><label>Name</label><input id="empName"/></div>
+            <div><label>Role</label><input id="empRole"/></div>
+            <div><label>Department</label><input id="empDept"/></div>
+            <div>
+              <label>Status</label>
+              <select id="empStatus"><option>Active</option><option>On Leave</option><option>Inactive</option></select>
+            </div>
+            <div class="full actions">
+              <button class="btn success" id="saveEmp">💾 Save</button>
+              <button class="btn" id="cancelEmp">✖ Cancel</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- FINANCE -->
+      <section id="view-finance" class="panel" hidden>
+        <h2>Invoices</h2>
+        <div class="actions" style="margin-bottom:10px;">
+          <button class="btn primary" id="addInvBtn">➕ New Invoice</button>
+          <input id="invSearch" placeholder="Search invoices..."/>
+          <button class="btn" id="exportInvCsv">⬇️ Export CSV</button>
+          <label class="btn">⬆️ Import CSV<input id="importInvCsv" type="file" accept=".csv" style="display:none"/></label>
+        </div>
+        <div class="table-wrap">
+          <table id="invTable">
+            <thead>
+              <tr>
+                <th>Invoice #</th><th>Customer</th><th>Date</th><th>Status</th><th>Amount</th><th>Actions</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+
+        <div id="invFormPanel" class="panel" style="margin-top:16px;" hidden>
+          <h2 id="invFormTitle">New Invoice</h2>
+          <div class="form-grid">
+            <div><label>Invoice #</label><input id="invNumber"/></div>
+            <div><label>Customer</label><input id="invCustomer"/></div>
+            <div><label>Date</label><input id="invDate" type="date"/></div>
+            <div><label>Status</label><select id="invStatus"><option>Draft</option><option>Sent</option><option>Paid</option><option>Overdue</option></select></div>
+            <div><label>Amount</label><input id="invAmount" type="number" step="0.01"/></div>
+            <div class="full actions">
+              <button class="btn success" id="saveInv">💾 Save</button>
+              <button class="btn" id="cancelInv">✖ Cancel</button>
+              <button class="btn" id="printInv">🖨 Print</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- SETTINGS -->
+      <section id="view-settings" class="panel" hidden>
+        <h2>Settings</h2>
+        <div class="form-grid">
+          <div class="full">
+            <label>Organization Name</label>
+            <input id="settingOrg" placeholder="Your company name"/>
+          </div>
+          <div>
+            <label>Currency</label>
+            <select id="settingCurrency">
+              <option value="$">$</option><option value="€">€</option><option value="₹">₹</option><option value="£">£</option>
+            </select>
+          </div>
+          <div>
+            <label>Theme Accent</label>
+            <select id="settingAccent">
+              <option value="#3b82f6">Blue</option><option value="#10b981">Green</option><option value="#f59e0b">Amber</option><option value="#ef4444">Red</option><option value="#8b5cf6">Violet</option>
+            </select>
+          </div>
+          <div>
+            <label>Theme</label>
+            <select id="settingTheme">
+              <option value="dark">Dark</option>
+              <option value="light">Light</option>
+            </select>
+          </div>
+          <div class="full actions">
+            <button class="btn success" id="saveSettings">💾 Save Settings</button>
+            <button class="btn" id="loadDemo">🧪 Load Demo Data</button>
+            <button class="btn" id="backupJson">⬇️ Backup (JSON)</button>
+            <label class="btn">⬆️ Restore (JSON)<input id="restoreJson" type="file" accept=".json" style="display:none"/></label>
+            <button class="btn danger" id="resetData">🗑 Reset All Data</button>
+          </div>
+        </div>
+        <p class="note">Tip: Backup creates a <code>miniERP.json</code> file that you can restore later.</p>
+      </section>
+
+      <div class="footer">Mini ERP Pro (HTML-only, offline) • LocalStorage demo • No backend required</div>
+    </main>
+  </div>
+
+  <script>
+    /* ---------- Utilities ---------- */
+    const $ = (q) => document.querySelector(q);
+    const $$ = (q) => Array.from(document.querySelectorAll(q));
+    const todayStr = () => new Date().toISOString().slice(0,10);
+
+    const store = JSON.parse(localStorage.getItem("miniERP") || "{}");
+    if (!store.settings) store.settings = { org: "Acme Corp", currency: "$", accent: "#3b82f6", theme: "dark" };
+    if (!store.sales) store.sales = [];
+    if (!store.inventory) store.inventory = [];
+    if (!store.po) store.po = [];
+    if (!store.employees) store.employees = [];
+    if (!store.invoices) store.invoices = [];
+    if (!store.misc) store.misc = { sticky: "" };
+    persist();
+
+    function persist() { localStorage.setItem("miniERP", JSON.stringify(store)); }
+    function currency() { return (store.settings?.currency || "$"); }
+    function fmtMoney(n) { return currency() + (Number(n || 0).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})); }
+    function sum(arr, f) { return arr.reduce((a,c)=> a + (f ? Number(f(c) || 0) : Number(c || 0)), 0); }
+    function show(view) {
+      $$(".menu button").forEach(b => b.classList.toggle("active", b.dataset.view===view));
+      $$("main > section").forEach(s => s.hidden = s.id !== ("view-" + view));
+    }
+
+    /* ---------- Navigation ---------- */
+    $$(".menu button").forEach(btn => btn.addEventListener("click", () => show(btn.dataset.view)));
+
+    /* ---------- Global Search ---------- */
+    $("#globalSearch").addEventListener("keydown", (e) => {
+      if (e.key === "Enter") {
+        const q = e.target.value.trim().toLowerCase();
+        if (!q) return;
+        const pool = [
+          ...store.sales.map(r => ({module:"sales", r})),
+          ...store.inventory.map(r => ({module:"inventory", r})),
+          ...store.po.map(r => ({module:"purchasing", r})),
+          ...store.employees.map(r => ({module:"hr", r})),
+          ...store.invoices.map(r => ({module:"finance", r})),
+        ];
+        const found = pool.find(x => JSON.stringify(x.r).toLowerCase().includes(q));
+        if (found) show(found.module); else alert("No match found");
+      }
+    });
+
+    /* ---------- Settings ---------- */
+    function applyTheme() {
+      document.documentElement.style.setProperty("--accent", store.settings.accent);
+      $("#orgName").textContent = store.settings.org;
+      document.body.classList.toggle("light", store.settings.theme === "light");
+    }
+    function renderSettings() {
+      applyTheme();
+      $("#settingOrg").value = store.settings.org;
+      $("#settingCurrency").value = store.settings.currency;
+      $("#settingAccent").value = store.settings.accent;
+      $("#settingTheme").value = store.settings.theme;
+      $("#sticky").value = store.misc.sticky || "";
+    }
+    $("#saveSettings").addEventListener("click", () => {
+      store.settings.org = $("#settingOrg").value || store.settings.org;
+      store.settings.currency = $("#settingCurrency").value || store.settings.currency;
+      store.settings.accent = $("#settingAccent").value || store.settings.accent;
+      store.settings.theme = $("#settingTheme").value || store.settings.theme;
+      persist(); renderSettings(); renderCharts(); alert("Settings saved.");
+    });
+    $("#resetData").addEventListener("click", () => {
+      if (!confirm("Reset ALL data?")) return;
+      localStorage.removeItem("miniERP");
+      location.reload();
+    });
+    $("#backupJson").addEventListener("click", () => {
+      const blob = new Blob([JSON.stringify(store, null, 2)], {type:"application/json"});
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(blob);
+      a.download = "miniERP.json";
+      a.click();
+      URL.revokeObjectURL(a.href);
+    });
+    $("#restoreJson").addEventListener("change", (e) => {
+      const f = e.target.files[0]; if (!f) return;
+      const reader = new FileReader();
+      reader.onload = () => {
+        try {
+          const data = JSON.parse(reader.result);
+          localStorage.setItem("miniERP", JSON.stringify(data));
+          alert("Restore successful. Reloading...");
+          location.reload();
+        } catch(err) { alert("Invalid JSON file."); }
+      };
+      reader.readAsText(f);
+      e.target.value = "";
+    });
+    $("#saveSticky").addEventListener("click", () => { store.misc.sticky = $("#sticky").value || ""; persist(); alert("Notes saved!"); });
+
+    // Demo data loader
+    $("#loadDemo").addEventListener("click", () => {
+      if (!confirm("Load demo data? This will overwrite current lists (not settings).")) return;
+      store.sales = [
+        { number:"SO-1001", customer:"Neo Store", date: todayStr(), status:"Open", lines:[{sku:"A1",qty:2,price:199.0},{sku:"B2",qty:1,price:399.0}] },
+        { number:"SO-1002", customer:"Sunrise Ltd", date: todayStr(), status:"Processing", lines:[{sku:"A1",qty:5,price:179.0}] },
+        { number:"SO-1003", customer:"Orbit Inc", date: todayStr(), status:"Shipped", lines:[{sku:"C3",qty:3,price:89.0}] },
+        { number:"SO-1004", customer:"Orbit Inc", date: todayStr(), status:"Closed", lines:[{sku:"B2",qty:2,price:399.0}] },
+      ];
+      store.inventory = [
+        { sku:"A1", name:"Alpha Widget", category:"Widgets", stock:120, reorder:30 },
+        { sku:"B2", name:"Beta Gadget", category:"Gadgets", stock:45, reorder:20 },
+        { sku:"C3", name:"Gamma Module", category:"Modules", stock:200, reorder:50 },
+        { sku:"D4", name:"Delta Part", category:"Parts", stock:10, reorder:15 },
+      ];
+      store.po = [
+        { number:"PO-9001", vendor:"Parts Co.", date: todayStr(), status:"Approved", lines:[{sku:"D4",qty:50,price:35}] },
+        { number:"PO-9002", vendor:"WidgetWorks", date: todayStr(), status:"Open", lines:[{sku:"A1",qty:40,price:120}] },
+      ];
+      store.employees = [
+        { id:"E-001", name:"Aarav Singh", role:"Manager", dept:"Operations", status:"Active" },
+        { id:"E-002", name:"Meera Jain", role:"Accountant", dept:"Finance", status:"Active" },
+        { id:"E-003", name:"Ravi Kumar", role:"Storekeeper", dept:"Warehouse", status:"On Leave" },
+      ];
+      const now = new Date();
+      store.invoices = [];
+      for (let i=0;i<12;i++) {
+        const dt = new Date(now.getFullYear(), i, 15).toISOString().slice(0,10);
+        store.invoices.push({ number:`INV-${now.getFullYear()}${String(i+1).padStart(2,'0')}-01`, customer:"Neo Store", date: dt, status:"Paid", amount: 1000 + i*150 });
+        store.invoices.push({ number:`INV-${now.getFullYear()}${String(i+1).padStart(2,'0')}-02`, customer:"Orbit Inc", date: dt, status:(i%3===0?"Overdue":"Sent"), amount: 700 + i*120 });
+      }
+      persist(); renderAll(); alert("Demo data loaded!");
+    });
+
+    /* ---------- Dashboard ---------- */
+    function renderDashboard() {
+      const mtdRevenue = sum(store.invoices.filter(i => i.status === "Paid" && isSameMonth(i.date, new Date())), i => Number(i.amount || 0));
+      $("#kpiRevenue").textContent = fmtMoney(mtdRevenue);
+      $("#kpiStock").textContent = sum(store.inventory, i => Number(i.stock || 0));
+      $("#kpiOpenOrders").textContent = store.sales.filter(s => ["Open","Processing","Shipped"].includes(s.status)).length.toString();
+      $("#kpiEmployees").textContent = store.employees.length.toString();
+    }
+    function isSameMonth(dateStr, d2) {
+      const d1 = new Date(dateStr); return d1.getFullYear()===d2.getFullYear() && d1.getMonth()===d2.getMonth();
+    }
+
+    /* ---------- SALES ---------- */
+    function salesTotal(lines) {
+      try { const arr = Array.isArray(lines) ? lines : JSON.parse(lines || "[]"); return sum(arr, l => (Number(l.qty||0)*Number(l.price||0))); }
+      catch(e) { return 0; }
+    }
+    function renderSales() {
+      const q = ($("#salesSearch").value || "").toLowerCase();
+      const tbody = $("#salesTable tbody"); tbody.innerHTML = "";
+      store.sales
+        .filter(s => JSON.stringify(s).toLowerCase().includes(q))
+        .forEach((s, idx) => {
+          const tr = document.createElement("tr");
+          tr.innerHTML = `
+            <td>${s.number}</td>
+            <td>${s.customer}</td>
+            <td>${s.date || ""}</td>
+            <td><span class="tag">${s.status}</span></td>
+            <td>${fmtMoney(salesTotal(s.lines))}</td>
+            <td class="inline-actions">
+              <button class="btn" data-edit="${idx}">✏️ Edit</button>
+              <button class="btn warn" data-dup="${idx}">📄 Duplicate</button>
+              <button class="btn danger" data-del="${idx}">🗑 Delete</button>
+            </td>`;
+          tbody.appendChild(tr);
+        });
+      tbody.querySelectorAll("[data-edit]").forEach(b => b.addEventListener("click", () => editSales(+b.dataset.edit)));
+      tbody.querySelectorAll("[data-dup]").forEach(b => b.addEventListener("click", () => duplicateSO(+b.dataset.dup)));
+      tbody.querySelectorAll("[data-del]").forEach(b => b.addEventListener("click", () => { store.sales.splice(+b.dataset.del,1); persist(); renderSales(); renderDashboard(); renderCharts(); }));
+    }
+    function editSales(i) {
+      const s = store.sales[i];
+      $("#salesFormPanel").hidden = false;
+      $("#salesFormTitle").textContent = "Edit Order";
+      $("#saveSalesOrder").dataset.index = i;
+      $("#soNumber").value = s.number;
+      $("#soCustomer").value = s.customer;
+      $("#soDate").value = s.date || todayStr();
+      $("#soStatus").value = s.status;
+      $("#soLines").value = JSON.stringify(s.lines, null, 2);
+    }
+    function duplicateSO(i) {
+      const s = store.sales[i]; if (!s) return;
+      const copy = JSON.parse(JSON.stringify(s));
+      copy.number = s.number + "-COPY";
+      copy.status = "Open";
+      store.sales.push(copy);
+      persist(); renderSales(); renderDashboard(); renderCharts();
+    }
+    $("#addSalesOrderBtn").addEventListener("click", () => {
+      $("#salesFormPanel").hidden = false;
+      $("#salesFormTitle").textContent = "New Order";
+      $("#saveSalesOrder").dataset.index = "";
+      $("#soNumber").value = ""; $("#soCustomer").value = "";
+      $("#soDate").value = todayStr(); $("#soStatus").value = "Open";
+      $("#soLines").value = '[{"sku":"A1","qty":2,"price":99.5}]';
+    });
+    $("#duplicateSalesOrder").addEventListener("click", () => {
+      const idx = $("#saveSalesOrder").dataset.index;
+      if (idx === "") return alert("Open an order to duplicate.");
+      duplicateSO(+idx);
+    });
+    $("#cancelSalesOrder").addEventListener("click", () => { $("#salesFormPanel").hidden = true; });
+    $("#saveSalesOrder").addEventListener("click", () => {
+      let lines = [];
+      try { lines = JSON.parse($("#soLines").value || "[]"); } catch(e) { alert("Invalid lines JSON"); return; }
+      const entry = { number: $("#soNumber").value.trim(), customer: $("#soCustomer").value.trim(), date: $("#soDate").value, status: $("#soStatus").value, lines };
+      const idx = $("#saveSalesOrder").dataset.index;
+      if (!entry.number) return alert("Order # required");
+      if (idx !== "") store.sales[+idx] = entry; else store.sales.push(entry);
+      persist(); $("#salesFormPanel").hidden = true; renderSales(); renderDashboard(); renderCharts();
+    });
+    $("#salesSearch").addEventListener("input", renderSales);
+
+    // CSV Export/Import (Sales)
+    $("#exportSalesCsv").addEventListener("click", () => exportCsv("sales.csv", store.sales, ["number","customer","date","status","lines"]));
+    $("#importSalesCsv").addEventListener("change", (e) => importCsv(e.target.files[0], "sales"));
+    
+    /* ---------- INVENTORY ---------- */
+    function renderInventory() {
+      const q = ($("#inventorySearch").value || "").toLowerCase();
+      const tbody = $("#inventoryTable tbody"); tbody.innerHTML = "";
+      store.inventory
+        .filter(it => JSON.stringify(it).toLowerCase().includes(q))
+        .forEach((it, idx) => {
+          const tr = document.createElement("tr");
+          const low = Number(it.stock||0) <= Number(it.reorder||0);
+          tr.innerHTML = `
+            <td>${it.sku}</td>
+            <td>${it.name}</td>
+            <td>${it.category}</td>
+            <td>${it.stock} ${low ? '<span class="tag" style="border-color:#f59e0b;color:#f59e0b">Low</span>' : ''}</td>
+            <td>${it.reorder}</td>
+            <td class="inline-actions">
+              <button class="btn" data-edit="${idx}">✏️ Edit</button>
+              <button class="btn warn" data-restock="${idx}">🔄 Restock</button>
+              <button class="btn danger" data-del="${idx}">🗑 Delete</button>
+            </td>`;
+          tbody.appendChild(tr);
+        });
+      tbody.querySelectorAll("[data-edit]").forEach(b => b.addEventListener("click", () => editItem(+b.dataset.edit)));
+      tbody.querySelectorAll("[data-restock]").forEach(b => b.addEventListener("click", () => {
+        const qty = Number(prompt("Add quantity:", "10") || 0);
+        if (qty>0) { store.inventory[+b.dataset.restock].stock = Number(store.inventory[+b.dataset.restock].stock||0) + qty; persist(); renderInventory(); renderDashboard(); renderCharts(); }
+      }));
+      tbody.querySelectorAll("[data-del]").forEach(b => b.addEventListener("click", () => { store.inventory.splice(+b.dataset.del,1); persist(); renderInventory(); renderDashboard(); renderCharts(); }));
+    }
+    function editItem(i) {
+      const it = store.inventory[i];
+      $("#inventoryFormPanel").hidden = false;
+      $("#inventoryFormTitle").textContent = "Edit Item";
+      $("#saveItem").dataset.index = i;
+      $("#invSku").value = it.sku;
+      $("#invName").value = it.name;
+      $("#invCategory").value = it.category;
+      $("#invStock").value = it.stock;
+      $("#invReorder").value = it.reorder;
+    }
+    $("#addItemBtn").addEventListener("click", () => {
+      $("#inventoryFormPanel").hidden = false;
+      $("#inventoryFormTitle").textContent = "New Item";
+      $("#saveItem").dataset.index = "";
+      $("#invSku").value = ""; $("#invName").value = ""; $("#invCategory").value = "";
+      $("#invStock").value = "0"; $("#invReorder").value = "10";
+    });
+    $("#cancelItem").addEventListener("click", () => { $("#inventoryFormPanel").hidden = true; });
+    $("#saveItem").addEventListener("click", () => {
+      const entry = {
+        sku: $("#invSku").value.trim(),
+        name: $("#invName").value.trim(),
+        category: $("#invCategory").value.trim(),
+        stock: Number($("#invStock").value || 0),
+        reorder: Number($("#invReorder").value || 0),
+      };
+      if (!entry.sku) return alert("SKU required");
+      const idx = $("#saveItem").dataset.index;
+      if (idx !== "") store.inventory[+idx] = entry; else store.inventory.push(entry);
+      persist(); $("#inventoryFormPanel").hidden = true; renderInventory(); renderDashboard(); renderCharts();
+    });
+    $("#inventorySearch").addEventListener("input", renderInventory);
+    $("#exportInventoryCsv").addEventListener("click", () => exportCsv("inventory.csv", store.inventory, ["sku","name","category","stock","reorder"]));
+    $("#importInventoryCsv").addEventListener("change", (e) => importCsv(e.target.files[0], "inventory"));
+
+    /* ---------- PURCHASING ---------- */
+    function poTotal(lines) {
+      try { const arr = Array.isArray(lines) ? lines : JSON.parse(lines || "[]"); return sum(arr, l => (Number(l.qty||0)*Number(l.price||0))); }
+      catch(e) { return 0; }
+    }
+    function renderPO() {
+      const q = ($("#poSearch").value || "").toLowerCase();
+      const tbody = $("#poTable tbody"); tbody.innerHTML = "";
+      store.po
+        .filter(p => JSON.stringify(p).toLowerCase().includes(q))
+        .forEach((p, idx) => {
+          const tr = document.createElement("tr");
+          tr.innerHTML = `
+            <td>${p.number}</td>
+            <td>${p.vendor}</td>
+            <td>${p.date || ""}</td>
+            <td><span class="tag">${p.status}</span></td>
+            <td>${fmtMoney(poTotal(p.lines))}</td>
+            <td class="inline-actions">
+              <button class="btn" data-edit="${idx}">✏️ Edit</button>
+              <button class="btn success" data-receive="${idx}">📦 Receive</button>
+              <button class="btn danger" data-del="${idx}">🗑 Delete</button>
+            </td>`;
+          tbody.appendChild(tr);
+        });
+      tbody.querySelectorAll("[data-edit]").forEach(b => b.addEventListener("click", () => editPO(+b.dataset.edit)));
+      tbody.querySelectorAll("[data-del]").forEach(b => b.addEventListener("click", () => { store.po.splice(+b.dataset.del,1); persist(); renderPO(); renderDashboard(); renderCharts(); }));
+      tbody.querySelectorAll("[data-receive]").forEach(b => b.addEventListener("click", () => receivePO(+b.dataset.receive)));
+    }
+    function editPO(i) {
+      const p = store.po[i];
+      $("#poFormPanel").hidden = false;
+      $("#poFormTitle").textContent = "Edit PO";
+      $("#savePO").dataset.index = i;
+      $("#poNumber").value = p.number;
+      $("#poVendor").value = p.vendor;
+      $("#poDate").value = p.date || todayStr();
+      $("#poStatus").value = p.status;
+      $("#poLines").value = JSON.stringify(p.lines, null, 2);
+    }
+    function receivePO(i) {
+      const p = store.po[i];
+      if (!p || !Array.isArray(p.lines)) return;
+      p.status = "Received";
+      p.lines.forEach(l => {
+        const found = store.inventory.find(it => it.sku === l.sku);
+        if (found) found.stock = Number(found.stock||0) + Number(l.qty||0);
+        else store.inventory.push({ sku: l.sku, name: l.sku, category: "Received", stock: Number(l.qty||0), reorder: 0 });
+      });
+      persist(); renderPO(); renderInventory(); renderDashboard(); renderCharts();
+    }
+    $("#addPOBtn").addEventListener("click", () => {
+      $("#poFormPanel").hidden = false;
+      $("#poFormTitle").textContent = "New PO";
+      $("#savePO").dataset.index = "";
+      $("#poNumber").value = ""; $("#poVendor").value = ""; $("#poDate").value = todayStr();
+      $("#poStatus").value = "Open"; $("#poLines").value = '[{"sku":"A1","qty":5,"price":80}]';
+    });
+    $("#cancelPO").addEventListener("click", () => { $("#poFormPanel").hidden = true; });
+    $("#savePO").addEventListener("click", () => {
+      let lines = [];
+      try { lines = JSON.parse($("#poLines").value || "[]"); } catch(e) { alert("Invalid lines JSON"); return; }
+      const entry = { number: $("#poNumber").value.trim(), vendor: $("#poVendor").value.trim(), date: $("#poDate").value, status: $("#poStatus").value, lines };
+      if (!entry.number) return alert("PO # required");
+      const idx = $("#savePO").dataset.index;
+      if (idx !== "") store.po[+idx] = entry; else store.po.push(entry);
+      persist(); $("#poFormPanel").hidden = true; renderPO(); renderDashboard(); renderCharts();
+    });
+    $("#poSearch").addEventListener("input", renderPO);
+    $("#exportPOCsv").addEventListener("click", () => exportCsv("purchase_orders.csv", store.po, ["number","vendor","date","status","lines"]));
+    $("#importPOCsv").addEventListener("change", (e) => importCsv(e.target.files[0], "po"));
+
+    /* ---------- HR ---------- */
+    function renderEmployees() {
+      const q = ($("#empSearch").value || "").toLowerCase();
+      const tbody = $("#empTable tbody"); tbody.innerHTML = "";
+      store.employees
+        .filter(e => JSON.stringify(e).toLowerCase().includes(q))
+        .forEach((e, idx) => {
+          const tr = document.createElement("tr");
+          tr.innerHTML = `
+            <td>${e.id}</td>
+            <td>${e.name}</td>
+            <td><span class="tag" style="color:#fff;background:linear-gradient(135deg,#8b5cf6,#3b82f6)"> ${e.role} </span></td>
+            <td>${e.dept}</td>
+            <td><span class="tag">${e.status}</span></td>
+            <td class="inline-actions">
+              <button class="btn" data-edit="${idx}">✏️ Edit</button>
+              <button class="btn danger" data-del="${idx}">🗑 Delete</button>
+            </td>`;
+          tbody.appendChild(tr);
+        });
+      tbody.querySelectorAll("[data-edit]").forEach(b => b.addEventListener("click", () => editEmp(+b.dataset.edit)));
+      tbody.querySelectorAll("[data-del]").forEach(b => b.addEventListener("click", () => { store.employees.splice(+b.dataset.del,1); persist(); renderEmployees(); renderDashboard(); renderCharts(); }));
+    }
+    function editEmp(i) {
+      const e = store.employees[i];
+      $("#empFormPanel").hidden = false;
+      $("#empFormTitle").textContent = "Edit Employee";
+      $("#saveEmp").dataset.index = i;
+      $("#empId").value = e.id;
+      $("#empName").value = e.name;
+      $("#empRole").value = e.role;
+      $("#empDept").value = e.dept;
+      $("#empStatus").value = e.status;
+    }
+    $("#addEmpBtn").addEventListener("click", () => {
+      $("#empFormPanel").hidden = false;
+      $("#empFormTitle").textContent = "New Employee";
+      $("#saveEmp").dataset.index = "";
+      $("#empId").value = ""; $("#empName").value = ""; $("#empRole").value = ""; $("#empDept").value = ""; $("#empStatus").value = "Active";
+    });
+    $("#cancelEmp").addEventListener("click", () => { $("#empFormPanel").hidden = true; });
+    $("#saveEmp").addEventListener("click", () => {
+      const entry = { id: $("#empId").value.trim(), name: $("#empName").value.trim(), role: $("#empRole").value.trim(), dept: $("#empDept").value.trim(), status: $("#empStatus").value };
+      if (!entry.id) return alert("Emp ID required");
+      const idx = $("#saveEmp").dataset.index;
+      if (idx !== "") store.employees[+idx] = entry; else store.employees.push(entry);
+      persist(); $("#empFormPanel").hidden = true; renderEmployees(); renderDashboard(); renderCharts();
+    });
+    $("#empSearch").addEventListener("input", renderEmployees);
+    $("#exportEmpCsv").addEventListener("click", () => exportCsv("employees.csv", store.employees, ["id","name","role","dept","status"]));
+    $("#importEmpCsv").addEventListener("change", (e) => importCsv(e.target.files[0], "employees"));
+
+    /* ---------- FINANCE ---------- */
+    function renderInvoices() {
+      const q = ($("#invSearch").value || "").toLowerCase();
+      const tbody = $("#invTable tbody"); tbody.innerHTML = "";
+      store.invoices
+        .filter(inv => JSON.stringify(inv).toLowerCase().includes(q))
+        .forEach((inv, idx) => {
+          const tr = document.createElement("tr");
+          tr.innerHTML = `
+            <td>${inv.number}</td>
+            <td>${inv.customer}</td>
+            <td>${inv.date || ""}</td>
+            <td><span class="tag">${inv.status}</span></td>
+            <td>${fmtMoney(inv.amount)}</td>
+            <td class="inline-actions">
+              <button class="btn" data-edit="${idx}">✏️ Edit</button>
+              <button class="btn success" data-pay="${idx}">✅ Mark Paid</button>
+              <button class="btn" data-print="${idx}">🖨 Print</button>
+              <button class="btn danger" data-del="${idx}">🗑 Delete</button>
+            </td>`;
+          tbody.appendChild(tr);
+        });
+      tbody.querySelectorAll("[data-edit]").forEach(b => b.addEventListener("click", () => editInv(+b.dataset.edit)));
+      tbody.querySelectorAll("[data-pay]").forEach(b => b.addEventListener("click", () => { store.invoices[+b.dataset.pay].status = "Paid"; persist(); renderInvoices(); renderDashboard(); renderCharts(); }));
+      tbody.querySelectorAll("[data-del]").forEach(b => b.addEventListener("click", () => { store.invoices.splice(+b.dataset.del,1); persist(); renderInvoices(); renderDashboard(); renderCharts(); }));
+      tbody.querySelectorAll("[data-print]").forEach(b => b.addEventListener("click", () => printInvoice(+b.dataset.print)));
+    }
+    function editInv(i) {
+      const inv = store.invoices[i];
+      $("#invFormPanel").hidden = false;
+      $("#invFormTitle").textContent = "Edit Invoice";
+      $("#saveInv").dataset.index = i;
+      $("#invNumber").value = inv.number;
+      $("#invCustomer").value = inv.customer;
+      $("#invDate").value = inv.date || todayStr();
+      $("#invStatus").value = inv.status;
+      $("#invAmount").value = inv.amount;
+    }
+    $("#addInvBtn").addEventListener("click", () => {
+      $("#invFormPanel").hidden = false;
+      $("#invFormTitle").textContent = "New Invoice";
+      $("#saveInv").dataset.index = "";
+      $("#invNumber").value = ""; $("#invCustomer").value = "";
+      $("#invDate").value = todayStr(); $("#invStatus").value = "Draft"; $("#invAmount").value = "0.00";
+    });
+    $("#cancelInv").addEventListener("click", () => { $("#invFormPanel").hidden = true; });
+    $("#saveInv").addEventListener("click", () => {
+      const entry = { number: $("#invNumber").value.trim(), customer: $("#invCustomer").value.trim(), date: $("#invDate").value, status: $("#invStatus").value, amount: Number($("#invAmount").value || 0) };
+      if (!entry.number) return alert("Invoice # required");
+      const idx = $("#saveInv").dataset.index;
+      if (idx !== "") store.invoices[+idx] = entry; else store.invoices.push(entry);
+      persist(); $("#invFormPanel").hidden = true; renderInvoices(); renderDashboard(); renderCharts();
+    });
+    $("#invSearch").addEventListener("input", renderInvoices);
+    $("#exportInvCsv").addEventListener("click", () => exportCsv("invoices.csv", store.invoices, ["number","customer","date","status","amount"]));
+    $("#importInvCsv").addEventListener("change", (e) => importCsv(e.target.files[0], "invoices"));
+    $("#printInv").addEventListener("click", () => {
+      const idx = $("#saveInv").dataset.index;
+      if (idx === "") return alert("Open an invoice to print or use the table print button.");
+      printInvoice(+idx);
+    });
+
+    function printInvoice(i) {
+      const inv = store.invoices[i]; if (!inv) return;
+      const w = window.open("", "PRINT", "width=800,height=900");
+      const org = store.settings.org;
+      const cur = currency();
+      w.document.write(`
+        <html><head><title>Invoice ${inv.number}</title>
+        <style>
+          body { font-family: Arial, sans-serif; margin: 40px; }
+          .hdr { display:flex; justify-content:space-between; align-items:center; }
+          .logo { width:40px; height:40px; border-radius:8px; background: linear-gradient(135deg, ${getComputedStyle(document.documentElement).getPropertyValue('--accent')}, #8b5cf6); }
+          h1 { margin: 0 0 10px 0; }
+          table { width:100%; border-collapse:collapse; margin-top:20px; }
+          th, td { border:1px solid #ddd; padding:8px; text-align:left; }
+          .tot { text-align:right; font-weight:bold; }
+          .footer { margin-top:30px; color:#666; font-size:12px; }
+        </style></head><body>
+        <div class="hdr">
+          <div style="display:flex; gap:12px; align-items:center;">
+            <div class="logo"></div>
+            <div>
+              <h1>${org}</h1>
+              <div>Invoice</div>
+            </div>
+          </div>
+          <div>
+            <div><strong>#</strong> ${inv.number}</div>
+            <div><strong>Date</strong> ${inv.date || ""}</div>
+            <div><strong>Status</strong> ${inv.status}</div>
+          </div>
+        </div>
+        <hr/>
+        <div><strong>Bill To:</strong> ${inv.customer}</div>
+        <table>
+          <thead><tr><th>Description</th><th>Amount</th></tr></thead>
+          <tbody>
+            <tr><td>Invoice Amount</td><td>${cur}${Number(inv.amount||0).toFixed(2)}</td></tr>
+          </tbody>
+          <tfoot><tr><td class="tot">Total</td><td class="tot">${cur}${Number(inv.amount||0).toFixed(2)}</td></tr></tfoot>
+        </table>
+        <div class="footer">Generated by Mini ERP Pro</div>
+        </body></html>
+      `);
+      w.document.close();
+      w.focus();
+      w.print();
+      w.close();
+    }
+
+    /* ---------- VANILLA CANVAS CHARTS ---------- */
+
+    // Make canvas crisp on HiDPI screens
+    function setupCanvas(canvas) {
+      const dpr = window.devicePixelRatio || 1;
+      const rect = canvas.getBoundingClientRect();
+      canvas.width = rect.width * dpr;
+      canvas.height = rect.height * dpr;
+      const ctx = canvas.getContext('2d');
+      ctx.scale(dpr, dpr);
+      return ctx;
+    }
+    function getVars() {
+      return {
+        accent: getComputedStyle(document.documentElement).getPropertyValue('--accent').trim() || '#3b82f6',
+        grid: getComputedStyle(document.documentElement).getPropertyValue('--chart-grid').trim() || 'rgba(255,255,255,0.08)',
+        text: getComputedStyle(document.documentElement).getPropertyValue('--text').trim() || '#e5e7eb',
+        dim: getComputedStyle(document.documentElement).getPropertyValue('--text-dim').trim() || '#9ca3af',
+        green: getComputedStyle(document.documentElement).getPropertyValue('--accent-2').trim() || '#10b981',
+        blue: '#3b82f6', amber: '#f59e0b', red: '#ef4444', green2: '#10b981'
+      };
+    }
+
+    function drawLineChart(canvas, labels, data) {
+      if (!canvas) return;
+      const ctx = setupCanvas(canvas);
+      const vars = getVars();
+      const W = canvas.clientWidth, H = canvas.clientHeight;
+      const PADL = 40, PADB = 24, PADT = 10, PADR = 10;
+      const max = Math.max(1, ...data);
+      const steps = 4;
+      // Grid
+      ctx.strokeStyle = vars.grid; ctx.lineWidth = 1;
+      for (let i=0;i<=steps;i++) {
+        const y = PADT + ((H-PADT-PADB) * i / steps);
+        ctx.beginPath(); ctx.moveTo(PADL, y); ctx.lineTo(W-PADR, y); ctx.stroke();
+      }
+      // Axis labels (Y)
+      ctx.fillStyle = vars.dim; ctx.font = '12px system-ui';
+      for (let i=0;i<=steps;i++) {
+        const val = Math.round(max * (1 - i/steps));
+        const y = PADT + ((H-PADT-PADB) * i / steps) - 2;
+        ctx.fillText(currency() + val, 4, y);
+      }
+      // X labels
+      const n = labels.length;
+      for (let i=0;i<n;i+=Math.ceil(n/6)) {
+        const x = PADL + ((W-PADL-PADR) * i/(n-1));
+        ctx.fillText(labels[i], x-10, H-6);
+      }
+      // Line
+      ctx.strokeStyle = vars.accent; ctx.lineWidth = 2;
+      ctx.beginPath();
+      data.forEach((v, i) => {
+        const x = PADL + ((W-PADL-PADR) * i/(data.length-1));
+        const y = PADT + (H-PADT-PADB) * (1 - (v / max));
+        if (i===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
+      });
+      ctx.stroke();
+      // Fill area
+      ctx.fillStyle = vars.accent + '22';
+      ctx.lineTo(W-PADR, H-PADB); ctx.lineTo(PADL, H-PADB); ctx.closePath(); ctx.fill();
+    }
+
+    function drawBarChart(canvas, labels, data, horizontal=true) {
+      if (!canvas) return;
+      const ctx = setupCanvas(canvas);
+      const vars = getVars();
+      const W = canvas.clientWidth, H = canvas.clientHeight;
+      const PADL = 80, PADB = 24, PADT = 10, PADR = 10;
+      const max = Math.max(1, ...data);
+      ctx.fillStyle = vars.dim; ctx.font = '12px system-ui';
+      if (horizontal) {
+        const barH = (H-PADT-PADB)/labels.length - 6;
+        labels.forEach((lbl, i) => {
+          const y = PADT + i * ((H-PADT-PADB)/labels.length);
+          // label
+          ctx.fillText(lbl, 8, y + barH/1.3);
+          // bar
+          const bw = (W-PADL-PADR) * (data[i] / max);
+          ctx.fillStyle = vars.green + 'cc';
+          ctx.strokeStyle = vars.green; ctx.lineWidth = 1;
+          ctx.beginPath(); ctx.rect(PADL, y, bw, barH); ctx.fill(); ctx.stroke();
+          // value
+          ctx.fillStyle = vars.text;
+          ctx.fillText(String(data[i]), PADL + bw + 6, y + barH/1.3);
+        });
+      } else {
+        const barW = (W-PADL-PADR)/labels.length - 6;
+        labels.forEach((lbl, i) => {
+          const x = PADL + i * ((W-PADL-PADR)/labels.length);
+          const bh = (H-PADT-PADB) * (data[i] / max);
+          ctx.fillStyle = vars.green + 'cc';
+          ctx.beginPath(); ctx.rect(x, H-PADB-bh, barW, bh); ctx.fill();
+          ctx.fillStyle = vars.dim;
+          ctx.fillText(lbl, x, H-6);
+        });
+      }
+      // X axis line
+      ctx.strokeStyle = vars.grid; ctx.beginPath();
+      ctx.moveTo(PADL, H-PADB); ctx.lineTo(W-PADR, H-PADB); ctx.stroke();
+    }
+
+    function drawPieChart(canvas, labels, data) {
+      if (!canvas) return;
+      const ctx = setupCanvas(canvas);
+      const vars = getVars();
+      const W = canvas.clientWidth, H = canvas.clientHeight;
+      const r = Math.min(W,H)/3;
+      const cx = W/2 - 20, cy = H/2;
+      const colors = [vars.blue, vars.amber, vars.green2, vars.red];
+      const total = data.reduce((a,c)=>a+c,0) || 1;
+      let start = -Math.PI/2;
+      data.forEach((v, i) => {
+        const ang = (v/total) * Math.PI*2;
+        ctx.beginPath();
+        ctx.moveTo(cx, cy);
+        ctx.arc(cx, cy, r, start, start+ang);
+        ctx.closePath();
+        ctx.fillStyle = colors[i % colors.length];
+        ctx.fill();
+        start += ang;
+      });
+      // legend
+      ctx.font = '12px system-ui';
+      labels.forEach((lbl, i) => {
+        ctx.fillStyle = colors[i % colors.length];
+        ctx.fillRect(W - 120, 20 + i*18, 12, 12);
+        ctx.fillStyle = vars.text;
+        const pct = total ? Math.round(data[i]/total*100) : 0;
+        ctx.fillText(`${lbl} (${pct}%)`, W - 102, 30 + i*18);
+      });
+    }
+
+    /* ---------- Charts data & render ---------- */
+    function renderCharts() {
+      // Revenue: monthly totals from Paid invoices
+      const months = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+      const revData = Array(12).fill(0);
+      store.invoices.filter(i => i.status === "Paid").forEach(inv => {
+        const d = new Date(inv.date);
+        if (!isNaN(d)) revData[d.getMonth()] += Number(inv.amount || 0);
+      });
+      drawLineChart($("#chartRevenue"), months, revData);
+
+      // Inventory: Top 10 by stock
+      const invSorted = [...store.inventory].sort((a,b) => Number(b.stock||0) - Number(a.stock||0)).slice(0,10);
+      drawBarChart($("#chartInventory"),
+        invSorted.map(i => i.name || i.sku),
+        invSorted.map(i => Number(i.stock||0)),
+        true // horizontal
+      );
+
+      // Orders: status distribution
+      const statuses = ["Open","Processing","Shipped","Closed"];
+      const statusCounts = statuses.map(s => store.sales.filter(o => o.status === s).length);
+      drawPieChart($("#chartOrders"), statuses, statusCounts);
+    }
+
+    /* ---------- CSV helpers ---------- */
+    function exportCsv(filename, array, headers) {
+      const escape = v => `"${String(v ?? "").replace(/"/g,'""')}"`;
+      const lines = [headers.join(",")].concat(array.map(row => headers.map(h => escape(row[h])).join(",")));
+      const blob = new Blob([lines.join("\n")], {type:"text/csv"});
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(blob);
+      a.download = filename;
+      a.click();
+      URL.revokeObjectURL(a.href);
+    }
+    function importCsv(file, targetKey) {
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = () => {
+        const text = reader.result;
+        const rows = text.trim().split(/\r?\n/);
+        const headers = rows.shift().split(",").map(h => h.replace(/^"|"$/g,""));
+        const data = rows.map(line => {
+          const cols = parseCsvLine(line);
+          const obj = {};
+          headers.forEach((h, i) => obj[h] = cols[i]);
+          // Cast numeric where applicable
+          if (targetKey === "inventory") { obj.stock = Number(obj.stock||0); obj.reorder = Number(obj.reorder||0); }
+          if (targetKey === "invoices") { obj.amount = Number(obj.amount||0); }
+          if (["sales","po"].includes(targetKey) && obj.lines) {
+            try { obj.lines = JSON.parse(obj.lines); } catch(e) { obj.lines = []; }
+          }
+          return obj;
+        });
+        store[targetKey] = data;
+        persist();
+        renderAll();
+        alert("Import complete: " + targetKey);
+      };
+      reader.readAsText(file);
+      // reset input value
+      const inputId = {
+        sales: "#importSalesCsv",
+        inventory: "#importInventoryCsv",
+        po: "#importPOCsv",
+        employees: "#importEmpCsv",
+        invoices: "#importInvCsv"
+      }[targetKey];
+      const inp = document.querySelector(inputId);
+      if (inp) inp.value = "";
+    }
+    function parseCsvLine(line) {
+      const out = []; let cur = ""; let inQuotes = false;
+      for (let i=0; i<line.length; i++) {
+        const ch = line[i];
+        if (ch === '"' && line[i+1] === '"' && inQuotes) { cur += '"'; i++; continue; }
+        if (ch === '"') { inQuotes = !inQuotes; continue; }
+        if (ch === ',' && !inQuotes) { out.push(cur); cur = ""; continue; }
+        cur += ch;
+      }
+      out.push(cur);
+      return out;
+    }
+
+    /* ---------- Init ---------- */
+    function renderAll() {
+      renderSettings();
+      renderDashboard();
+      renderSales();
+      renderInventory();
+      renderPO();
+      renderEmployees();
+      renderInvoices();
+      renderCharts();
+    }
+    renderAll();
+  </script>
+</body>
+</html>

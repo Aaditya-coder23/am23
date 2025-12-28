@@ -1,0 +1,397 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+  <title>AM23</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 110px;
+      font-family: Arial, sans-serif;
+      background-image: url('bg.jpeg');
+      background-size: cover;
+      background-position: center;
+      background-repeat: no-repeat;
+    }
+
+    #s1a h4 { text-align: left; margin-bottom: 10px; }
+    #s1a p  { text-align: left; margin-bottom: 20px; }
+    #s1a img { float: right; display: block; margin: 10px auto; width: 350px; }
+
+    .header { position: relative; height: 123px; }
+    .logo { position: absolute; top: -100px; left: -50px; width: 150px; height: 160px; }
+
+    .welcome {
+      margin-top: -50px;
+      font-size: 50px;
+      font-weight: bold;
+      text-align: center;
+      color: #FFFFFF;
+      animation: glowPulse 2s infinite alternate;
+      text-shadow: 0 0 10px #FFFFFF, 0 0 20px #FFFFFF, 0 0 30px #FFFFFF;
+    }
+
+    @keyframes glowPulse {
+      0%   { text-shadow: 0 0 10px #FFFFFF, 0 0 20px #FFFFFF, 0 0 30px #FFFFFF; }
+      50%  { text-shadow: 0 0 20px #FFFFFF, 0 0 40px #FFFFFF, 0 0 60px #FFFFFF; }
+      100% { text-shadow: 0 0 10px #FFFFFF, 0 0 20px #FFFFFF, 0 0 30px #FFFFFF; }
+    }
+
+    .button-row {
+      display: flex;
+      justify-content: center;
+      gap: 40px;
+      margin-top: 50px;
+    }
+
+    .custom-button {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 15px;
+      background-color: rgba(0,0,0,0.4);
+      border: none;
+      border-radius: 10px;
+      color: white;
+      font-weight: bold;
+      cursor: pointer;
+      transition: transform 0.3s, box-shadow 0.3s;
+      width: 200px;
+    }
+
+    .custom-button img { width: 100px; height: 100px; margin-bottom: 10px; }
+    .custom-button:hover { transform: translateY(-5px); box-shadow: 0 5px 20px rgba(0,0,0,0.5); }
+
+    .content-section {
+      display: none;
+      margin-top: 30px;
+      text-align: center;
+      color: white;
+    }
+
+    /* This container ensures options stay in a row and content stays below */
+    .section-wrapper {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .options {
+      display: none;
+      justify-content: center;
+      gap: 20px;
+      margin-top: 30px;
+      width: 100%;
+    }
+
+    .option-btn {
+      padding: 10px 20px;
+      background: rgba(255,255,255,0.15);
+      border: 1px solid white;
+      border-radius: 8px;
+      cursor: pointer;
+      color: white;
+      min-width: 120px;
+    }
+
+    .content {
+      display: none;
+      margin-top: 40px;
+      text-align: center;
+      background: rgba(0,0,0,0.6);
+      padding: 20px;
+      border-radius: 10px;
+      width: 80%;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="header">
+    <a href="am23.html">
+      <img src="hurr.png" class="logo" alt="AM23 Logo">
+    </a>
+  </div>
+
+  <div class="welcome">Welcome to AM23!</div>
+
+  <div class="button-row">
+    <button class="custom-button" onclick="showSection(1)">
+      <img src="img1.jpeg" alt="">
+      <span>Projects for a healthier environment</span>
+    </button>
+    <button class="custom-button" onclick="showSection(2)">
+      <img src="img3.jpeg" alt="">
+      <span>Resources/requirements for businesses/companies</span>
+    </button>
+    <button class="custom-button" onclick="showSection(3)">
+      <img src="i.jpg" alt="">
+      <span>Games</span>
+    </button>
+
+    <button class="custom-button" onclick="showSection(4)">
+      <img src="stu.jpg" alt="">
+      <span>Resources for students</span>
+    </button>
+    <button class="custom-button" onclick="showSection(5)">
+      <img src="edu.png" alt="">
+      <span>Resources for educational institutions</span>
+    </button>
+    <button class="custom-button" onclick="showSection(6)">
+      <img src="cc.jpeg" alt="">
+      <span>AURAMAN Couriers</span>
+    </button>
+  </div>
+
+  <!-- SECTION 1 -->
+  <div id="section1" class="content-section">
+    <div class="section-wrapper">
+      <div class="options">
+        <div class="option-btn" onclick="showSubContent('s1a')">PET Plastic Eliminator</div>
+        <div class="option-btn" onclick="showSubContent('s1b')">Hydrophonics</div>
+      </div>
+
+      <div id="s1a" class="content">
+        <h2>PET बहुलकद्रव्यम् अपसारकः(PET Plastic Eliminator)</h2>
+        <img src="pet.jpeg" width="400" alt="">
+        <h4>What is it?</h4>
+
+        <p>A solar-powered chemical reactor that:</p>
+
+        <p>1. Uses sunlight and a small voltage to break down PET plastic waste into valuable chemicals (mainly glycolic acid).</p>
+
+        <p>2. Simultaneously produces hydrogen gas (H₂), a clean fuel, from water.</p>
+
+        <h4>Core idea</h4>
+
+        <p>1. Instead of burning or landfilling plastic (which causes pollution), this system upcycles plastic waste into useful products.</p>
+
+        <p>2. It combines photocatalysis (light-driven reactions) and electrochemistry in one device.</p>
+
+        <h4>Why it's important or needed?</h4>
+
+        <p>1. It solves two problems at once, i.e., plastic pollution and clean energy demand.</p>
+
+        <p>2. It is a green process as it is powered by sunlight and doesn't emit anything toxic.</p>
+
+        <h4>What we gain from this and how those are useful?</h4>
+
+        <p>1. Glycolic Acid → Used in cosmetics, pharma, and chemical industry.</p>
+
+        <p>2. Hydrogen Gas → Clean fuel for energy storage and fuel cells.</p>
+
+        <p>3. Minor byproducts (sometimes useful and never acts as a waste).</p>
+
+        <h4>Summary:</h4>
+
+        <p>This project is a future-ready solution for plastic waste management and hydrogen production, aligning with sustainability goals and circular economy principles.</p>
+
+        <p style="margin-top: 20px;">
+          <a href="pet.html" style="color: lightblue; text-decoration: underline;">
+            👉 Click here for full project details
+          </a>
+        </p>
+      </div>
+
+      <div id="s1b" class="content">
+        <h2>Hydrophonics</h2>
+        <p>Information will be updated soon.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- SECTION 2 -->
+  <div id="section2" class="content-section">
+    <div class="section-wrapper">
+      <div class="options">
+        <div class="option-btn" onclick="showContent('optA')">Ready-Made ERP for every type of business/company</div>
+        <div class="option-btn" onclick="showContent('optB')">On demand applications for companies/business</div>
+      </div>
+
+      <div id="optA" class="content">
+        <h2>Click below to preview and experience the ERP made by us:</h2>
+
+        <a href="l.html" style="color: lightblue; text-decoration: underline;">
+          Preview of ERP
+        </a>
+        <h4>To get(it's just ₹100):</h4>
+        <p>Phone number: 9643631003</p>
+        <p>Email address: am.23.products@gmail.com</p>
+      </div>
+
+      <div id="optB" class="content">
+        <h2>If you want any application(including this) for your business/company; contact:</h2>
+        <p>Phone number: 9643631003</p>
+        <p>Email address: am.23.products@gmail.com</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- SECTION 3 -->
+  <div id="section3" class="content-section">
+    <div class="section-wrapper">
+      <div class="options">
+        <div class="option-btn" onclick="showContent('a')">Preview of some basic game</div>
+        <div class="option-btn" onclick="showContent('b')">On demand game applications</div>
+      </div>
+
+      <div id="a" class="content">
+        <h4>Preview:</h4>
+        <a href="snake game.html" style="color: lightblue; text-decoration: underline;">
+          Snake Game
+        </a>
+        <p>.</p>
+        <a href="Neon Glide.html" style="color: lightblue; text-decoration: underline;">
+          Neon Glide
+        </a>
+      </div>
+
+      <div id="b" class="content">
+        <h4>We provide on demand game application:</h4>
+
+        <h5>To get a game, contact:</h5>
+        <p>Phone Number: 9643631003</p>
+        <p>Email Address: am.23.products@gmail.com</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- SECTION 4 -->
+  <div id="section4" class="content-section">
+    <div class="section-wrapper">
+      <div class="options">
+        <div class="option-btn" onclick="showContent('c')">Class 6</div>
+        <div class="option-btn" onclick="showContent('d')">Class 7</div>
+        <div class="option-btn" onclick="showContent('e')">Class 8</div>
+        <div class="option-btn" onclick="showContent('f')">Class 9</div>
+        <div class="option-btn" onclick="showContent('g')">Class 10</div>
+        <div class="option-btn" onclick="showContent('h')">Class 11</div>
+        <div class="option-btn" onclick="showContent('i')">Class 12</div>
+      </div>
+
+      <div id="c" class="content">
+        <h2>Click below to access resources for Class 6 CBSE:</h2>
+        <a href="6.html" style="color: lightblue; text-decoration: underline;">
+          Class 6
+        </a>
+      </div>
+
+      <div id="d" class="content">
+        <h2>Click below to access resources for Class 7 CBSE:</h2>
+        <a href="7.html" style="color: lightblue; text-decoration: underline;">
+          Class 7
+        </a>
+      </div>
+
+      <div id="e" class="content">
+        <h2>Click below to access resources for Class 8 CBSE:</h2>
+        <a href="8.html" style="color: lightblue; text-decoration: underline;">
+          Class 8
+        </a>
+      </div>
+
+      <div id="f" class="content">
+        <h2>Click below to access resources for Class 9 CBSE:</h2>
+        <a href="9.html" style="color: lightblue; text-decoration: underline;">
+          Class 9
+        </a>
+      </div>
+
+      <div id="g" class="content">
+        <h2>Click below to access resources for Class 10 CBSE:</h2>
+        <a href="10.html" style="color: lightblue; text-decoration: underline;">
+          Class 10
+        </a>
+      </div>
+
+      <div id="h" class="content">
+        <h2>Click below to access resources for Class 11 CBSE:</h2>
+        <a href="11.html" style="color: lightblue; text-decoration: underline;">
+          Class 11
+        </a>
+      </div>
+
+      <div id="i" class="content">
+        <h2>Click below to access resources for Class 12 CBSE:</h2>
+        <a href="12.html" style="color: lightblue; text-decoration: underline;">
+          Class 12
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <!-- SECTION 5 (placeholder to keep structure intact) -->
+  <div id="section5" class="content-section">
+    <div class="section-wrapper">
+      <div class="options"></div>
+      <div class="content">
+        <h2>Resources for educational institutions</h2>
+        <p>Content will be updated soon.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- SECTION 6 (placeholder to keep structure intact) -->
+  <div id="section6" class="content-section">
+    <div class="section-wrapper">
+      <div class="options"></div>
+      <div class="content">
+        <h2>AURAMAN Couriers</h2>
+        <p>Content will be updated soon.</p>
+      </div>
+    </div>
+  </div>
+
+
+
+<script>
+  function showSection(num) {
+    // Hide all main sections
+    document.querySelectorAll('.content-section').forEach(sec => sec.style.display = 'none');
+    // Hide all option rows and content boxes globally
+    document.querySelectorAll('.options').forEach(o => o.style.display = 'none');
+    document.querySelectorAll('.content').forEach(c => c.style.display = 'none');
+
+    const targetSection = document.getElementById('section' + num);
+    if (targetSection) {
+      targetSection.style.display = 'block';
+
+      const opts = targetSection.querySelector('.options');
+      const hasOptions = opts && opts.children && opts.children.length > 0;
+
+      // If the section has options, show them; otherwise show its first content block
+      if (hasOptions) {
+        opts.style.display = 'flex';
+      } else {
+        const firstContent = targetSection.querySelector('.content');
+        if (firstContent) firstContent.style.display = 'block';
+      }
+    }
+  }
+
+  function showSubContent(id) {
+    // Only affect contents inside section1
+    document.querySelectorAll('#section1 .content').forEach(c => c.style.display = 'none');
+    const target = document.getElementById(id);
+    if (target) target.style.display = 'block';
+  }
+
+  function showContent(id) {
+    // Find currently visible section
+    const visibleSection = Array.from(document.querySelectorAll('.content-section'))
+      .find(sec => sec.style.display === 'block');
+    if (!visibleSection) return;
+
+    // Hide all contents within the visible section only
+    visibleSection.querySelectorAll('.content').forEach(el => el.style.display = 'none');
+
+    const target = document.getElementById(id);
+    // Show target only if it belongs to the visible section
+    if (target && visibleSection.contains(target)) {
+      target.style.display = 'block';
+    }
+  }
+</script>
+
+
+</html>

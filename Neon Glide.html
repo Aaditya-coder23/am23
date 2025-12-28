@@ -1,0 +1,224 @@
+
+<!DOCTYPE html>
+<html lang='en'>
+<head>
+<meta charset='utf-8'>
+<meta name='viewport' content='width=device-width, initial-scale=1'>
+<title>Neon Glide — Fixed</title>
+<style>
+  :root{ --bg1:#030712; --bg2:#0b1226; --text:#e5e7eb; --line:#1f2a44; }
+  *{box-sizing:border-box}
+  html,body{height:100dvh; margin:0;}
+  body{
+    padding:16px; display:grid; place-items:center; color:var(--text);
+    font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Cantarell,'Noto Sans',Arial;
+    background:radial-gradient(1200px 600px at 50% -300px, var(--bg2), var(--bg1));
+  }
+
+  .card{
+    width:100%; max-width:560px; background:linear-gradient(180deg,#0b1020,#070c18);
+    border:1px solid var(--line); border-radius:16px; box-shadow:0 30px 50px rgba(0,0,0,0.5); padding:14px;
+  }
+
+  h1{margin:4px 0; font-size:22px}
+  .sub{margin:0; font-size:12px; color:#94a3b8}
+  .bar{display:flex; gap:8px; align-items:center; justify-content:space-between; margin-top:8px}
+  .pill{background:#0b1220; border:1px solid var(--line); border-radius:999px; padding:6px 10px; font-size:12px}
+
+  .stage{
+    position:relative;
+    width:480px; height:720px;
+    margin-top:10px;
+    transform-origin:top left;
+  }
+  canvas{width:480px; height:720px; border-radius:12px; border:1px solid var(--line); background:#050a16; display:block}
+  .btn{background:#0f172a; color:var(--text); border:1px solid var(--line); border-radius:10px; padding:8px 10px; font-size:13px}
+  .overlay{position:absolute; inset:0; display:grid; place-items:center; pointer-events:none}
+  .badge{pointer-events:auto; background:rgba(2,6,23,0.85); border:1px solid var(--line); color:var(--text); border-radius:12px; padding:14px 16px; text-align:center; backdrop-filter:blur(3px)}
+  @media (max-width: 480px) {
+    h1 { font-size: 18px; }
+    .sub { font-size: 11px; }
+    .pill, .btn { padding: 6px 8px; font-size: 12px; }
+  }
+</style>
+</head>
+<body>
+<div class='card' id="wrap">
+  <h1>Neon Glide ✨</h1>
+  <p class='sub'>Tap/Click or press <span style='font-family:monospace'>Space/Up</span> to flap • Pause: <span style='font-family:monospace'>Space</span> • Restart: <span style='font-family:monospace'>Enter</span></p>
+  <div class='bar'>
+    <div class='pill'>Score: <span id='score'>0</span></div>
+    <div class='pill'>Best: <span id='best'>0</span></div>
+    <button id='pauseBtn' class='btn'>⏸︎ Pause</button>
+  </div>
+
+  <div class="stage" id="stage">
+    <canvas id="game" width="480" height="720"></canvas>
+    <div id="overlay" class="overlay" style="display:none">
+      <div class="badge" id="overlayMsg">Paused</div>
+    </div>
+  </div>
+
+  <div style='display:flex; gap:8px; justify-content:center; margin-top:10px;'>
+    <button id='flapBtn' class='btn'>🪽 Flap</button>
+    <button id='restartBtn' class='btn'>↻ Restart</button>
+  </div>
+</div>
+
+<script>
+/* --------- Robust scroll prevention (no stopPropagation) --------- */
+const blockScrollKeys = (e) => {
+  const k = e.key.toLowerCase();
+  if (['arrowup','arrowdown',' '].includes(k)) {
+    e.preventDefault();
+  }
+};
+window.addEventListener('keydown', blockScrollKeys, { passive: false, capture: true });
+document.addEventListener('keydown', blockScrollKeys, { passive: false, capture: true });
+
+/* --------- Fit stage to remaining viewport height --------- */
+function vvSize() {
+  const vv = window.visualViewport;
+  return { w: vv ? vv.width : window.innerWidth, h: vv ? vv.height : window.innerHeight };
+}
+function fitGlideStage() {
+  const { w: vw, h: vh } = vvSize();
+  const baseW = 480, baseH = 720;
+
+  const wrap = document.getElementById('wrap');
+  const stage = document.getElementById('stage');
+
+  const h1 = wrap.querySelector('h1');
+  const sub = wrap.querySelector('.sub');
+  const bar = wrap.querySelector('.bar');
+  const buttonsRow = wrap.querySelector('div[style*="justify-content"]');
+
+  const headerHeight =
+    (h1?.offsetHeight || 0) + (sub?.offsetHeight || 0) + (bar?.offsetHeight || 0);
+  const bottomHeight = (buttonsRow?.offsetHeight || 0) + 16; // padding/margins
+
+  const availableH = Math.max(160, vh - headerHeight - bottomHeight - 16);
+  const scale = Math.max(0.5, Math.min(vw / baseW, availableH / baseH));
+
+  stage.style.transform = `scale(${scale})`;
+  stage.style.width = baseW + 'px';
+  stage.style.height = baseH + 'px';
+}
+fitGlideStage();
+(window.visualViewport || window).addEventListener('resize', fitGlideStage);
+
+(function(){
+  const canvas = document.getElementById('game');
+  const ctx = canvas.getContext('2d');
+
+  // Ensure canvas gets keyboard focus
+  canvas.tabIndex = 0;
+  canvas.focus();
+  canvas.addEventListener('pointerdown', () => canvas.focus());
+
+  let score=0, best=Number(localStorage.getItem('neon_glide_best')||0);
+  document.getElementById('best').textContent = best;
+  let paused=false, gameOver=false;
+  const overlay = document.getElementById('overlay');
+  const overlayMsg = document.getElementById('overlayMsg');
+  const scoreEl = document.getElementById('score');
+
+  const W=480,H=720;
+  let bird = {x:140, y:360, vy:0, r:14};
+  let pipes = []; let t=0; let last=performance.now();
+
+  function reset(){ score=0; scoreEl.textContent=score; paused=false; gameOver=false; overlay.style.display='none';
+    bird = {x:140,y:360,vy:0,r:14}; pipes=[]; t=0;
+  }
+
+  function flap(){ if(gameOver) return; if(paused) paused=false; bird.vy = -260; }
+  function togglePause(){ if(gameOver) return; paused=!paused; if(paused){ show('Paused'); } else hide(); }
+  function show(msg){ overlayMsg.textContent=msg; overlay.style.display='grid'; }
+  function hide(){ overlay.style.display='none'; }
+
+  document.getElementById('pauseBtn').addEventListener('click', togglePause);
+  document.getElementById('flapBtn').addEventListener('click', flap);
+  document.getElementById('restartBtn').addEventListener('click', reset);
+
+  // Key controls (Space/Up flap, Enter restart)
+  window.addEventListener('keydown', (e)=>{
+    const k=e.key.toLowerCase();
+    if(k===' '){ e.preventDefault(); flap(); }
+    else if(k==='arrowup'){ e.preventDefault(); flap(); }
+    else if(k==='enter' && gameOver){ reset(); }
+  }, {passive:false});
+
+  canvas.addEventListener('pointerdown', flap);
+
+  // Background stars
+  const stars = []; for(let i=0;i<100;i++){ stars.push({x:Math.random()*W,y:Math.random()*H,z:0.4+Math.random()*0.8}); }
+
+  function spawnPipe(){ const gap = 130; const topH = 80 + Math.random()*(H-160-gap); pipes.push({x:W+40, w:70, top:topH, gap:gap, passed:false}); }
+
+  function collide(){
+    for(const p of pipes){
+      if(bird.x+bird.r > p.x && bird.x-bird.r < p.x+p.w){
+        if(bird.y-bird.r < p.top || bird.y+bird.r > p.top+p.gap) return true;
+      }
+    }
+    return (bird.y-bird.r<0 || bird.y+bird.r>H);
+  }
+
+  function addScore(){
+    score++;
+    scoreEl.textContent=score;
+    if(score>best){ best=score; localStorage.setItem('neon_glide_best', String(best)); document.getElementById('best').textContent=best; }
+  }
+
+  function end(){ gameOver=true; show('💥 Game Over — Press Enter/Restart'); }
+
+  function draw(dt){
+    // bg
+    ctx.fillStyle='#050a16'; ctx.fillRect(0,0,W,H);
+    for(const s of stars){ s.y += 25*s.z*dt; if(s.y>H) { s.y = -10; s.x = Math.random()*W; } ctx.fillStyle = s.z>0.8? '#60a5fa':'#c4b5fd'; ctx.fillRect(s.x, s.y, 2*s.z, 2*s.z); }
+
+    // pipes
+    ctx.shadowColor='rgba(167,139,250,0.8)'; ctx.shadowBlur=12; ctx.fillStyle='#1f2937';
+    for(const p of pipes){ ctx.fillRect(p.x, 0, p.w, p.top); ctx.fillRect(p.x, p.top+p.gap, p.w, H-(p.top+p.gap)); }
+    ctx.shadowBlur=0;
+
+    // bird
+    ctx.save(); ctx.translate(bird.x, bird.y);
+    ctx.shadowColor='rgba(34,211,238,0.9)'; ctx.shadowBlur=14; ctx.fillStyle='#22d3ee';
+    ctx.beginPath(); ctx.arc(0,0,bird.r,0,Math.PI*2); ctx.fill();
+    ctx.shadowBlur=0; ctx.fillStyle='#a78bfa'; ctx.fillRect(-bird.r-2, 2, bird.r*2+4, 3);
+    ctx.restore();
+
+    // ground line
+    ctx.strokeStyle='#0ea5e9'; ctx.lineWidth=2; ctx.beginPath(); ctx.moveTo(0,H-2); ctx.lineTo(W,H-2); ctx.stroke();
+
+    // HUD (score is also in the header bar, but we keep the in-canvas readout)
+    ctx.fillStyle='rgba(255,255,255,0.8)'; ctx.font='14px system-ui'; ctx.fillText('Score '+score, 12, 22);
+  }
+
+  function update(dt){
+    if(paused || gameOver) return;
+    t += dt; if(t>1.2){ t=0; spawnPipe(); }
+    bird.vy += 520*dt; bird.y += bird.vy*dt;
+
+    for(const p of pipes){
+      p.x -= 160*dt;
+      if(!p.passed && p.x + p.w < bird.x - bird.r){
+        p.passed=true; addScore();
+      }
+    }
+    pipes = pipes.filter(p=>p.x+p.w>0);
+
+    if(collide()) end();
+  }
+
+  function loop(now){
+    const dt = Math.min(0.033, (now-last)/1000);
+    last=now; update(dt); draw(dt); requestAnimationFrame(loop);
+  }
+
+  reset(); requestAnimationFrame(loop);
+})();
+</script>
+</body>
+</html>
